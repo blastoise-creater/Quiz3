@@ -1,0 +1,416 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social Science Quiz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .question-section {
+            margin-bottom: 20px;
+        }
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 20px;
+        }
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .option-button {
+            background-color: #e2e8f0;
+            color: #475569;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: left;
+            border: none;
+            outline: none;
+        }
+        .option-button:hover {
+            background-color: #cbd5e1;
+            transform: translateY(-2px);
+        }
+        .option-button.selected {
+            background-color: #94a3b8;
+            color: #ffffff;
+        }
+        .option-button.correct {
+            background-color: #22c55e; /* Green for correct */
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .option-button.incorrect {
+            background-color: #ef4444; /* Red for incorrect */
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .nav-button {
+            background-color: #4f46e5;
+            color: #ffffff;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            outline: none;
+        }
+        .nav-button:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+        .nav-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .feedback-message {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            min-height: 25px; /* To prevent layout shift */
+        }
+        .feedback-correct {
+            color: #22c55e;
+        }
+        .feedback-incorrect {
+            color: #ef4444;
+        }
+        .theme-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body class="p-4">
+  <div class="quiz-container">
+    <h1 class="text-3xl font-bold mb-4 text-center">Social Science Quiz</h1>
+    <div id="theme-title" class="text-xl font-semibold mb-2"></div>
+    <div id="question-text" class="text-lg mb-4 font-medium"></div>
+    <div id="options-container" class="space-y-2 mb-4"></div>
+    <div id="feedback-message" class="font-semibold"></div>
+    <div class="flex justify-between mt-4">
+      <button id="prev-button" class="nav-button bg-indigo-600 text-white px-4 py-2 rounded" disabled>Previous</button>
+      <button id="next-button" class="nav-button bg-indigo-600 text-white px-4 py-2 rounded">Next</button>
+    </div>
+    <button id="submit-button" class="mt-6 w-full bg-green-600 text-white py-2 rounded">Submit Quiz</button>
+    <div id="result-section" class="mt-8 hidden">
+      <h2 class="text-2xl font-bold mb-2">Results</h2>
+      <p id="score-display"></p>
+      <canvas id="result-chart" class="my-4"></canvas>
+      <div id="incorrect-answers" class="mt-4"></div>
+    </div>
+  </div>
+  <script>
+    const quizData = [
+  {
+    theme: "Agriculture and Soils",
+    questions: [
+      {
+        question: "Which of the following crops is a Rabi crop?",
+        options: ["Bajra", "Wheat", "Maize", "Cotton"],
+        answer: "Wheat"
+      },
+      {
+        question: "The soil type most suitable for growing cotton is",
+        options: ["black", "red", "sandy", "laterite"],
+        answer: "black"
+      },
+      {
+        question: "The Green Revolution in India mainly focused on which type of crop?",
+        options: ["Pulses", "Fruits", "Food grains", "Spices"],
+        answer: "Food grains"
+      }
+    ]
+  },
+  {
+    theme: "Human Resources",
+    questions: [
+      {
+        question: "Which of the following is the most important resource for a country's development?",
+        options: ["Land", "Water", "Human resources", "Minerals"],
+        answer: "Human resources"
+      },
+      {
+        question: "Which factor does NOT affect population distribution?",
+        options: ["Climate", "Landforms", "Internet speed", "Availability of resources"],
+        answer: "Internet speed"
+      },
+      {
+        question: "What is the main reason for high population growth in developing countries?",
+        options: ["High death rate", "Low birth rate", "Improved healthcare and sanitation", "Lack of education"],
+        answer: "Improved healthcare and sanitation"
+      }
+    ]
+  },
+  {
+    theme: "Types of Government",
+    questions: [
+      {
+        question: "Citizens vote for their leaders and have equal rights",
+        options: ["(a) Oligarchy", "(b) Dictatorship", "(c) Monarchy", "(d) Democracy", "(e) Theocracy"],
+        answer: "(d) Democracy"
+      },
+      {
+        question: "Religious leaders govern based on religious laws",
+        options: ["(a) Oligarchy", "(b) Dictatorship", "(c) Monarchy", "(d) Democracy", "(e) Theocracy"],
+        answer: "(e) Theocracy"
+      },
+      {
+        question: "A small group of wealthy or influential people rule",
+        options: ["(a) Oligarchy", "(b) Dictatorship", "(c) Monarchy", "(d) Democracy", "(e) Theocracy"],
+        answer: "(a) Oligarchy"
+      },
+      {
+        question: "One person holds all power and often gains it through force",
+        options: ["(a) Oligarchy", "(b) Dictatorship", "(c) Monarchy", "(d) Democracy", "(e) Theocracy"],
+        answer: "(b) Dictatorship"
+      },
+      {
+        question: "Power is inherited and held by a king or queen",
+        options: ["(a) Oligarchy", "(b) Dictatorship", "(c) Monarchy", "(d) Democracy", "(e) Theocracy"],
+        answer: "(c) Monarchy"
+      }
+    ]
+  },
+  {
+    theme: "Introduction to Constitution of India",
+    questions: [
+      {
+        question: "Example: A child goes to school regardless of their background",
+        options: ["(a) Right to Freedom of Speech and Expression", "(b) Right to Freedom of Religion", "(c) Right to Equality", "(d) Right Against Exploitation"],
+        answer: "(c) Right to Equality"
+      },
+      {
+        question: "A person speaks freely about an issue without fear.",
+        options: ["(a) Right to Freedom of Speech and Expression", "(b) Right to Freedom of Religion", "(c) Right to Equality", "(d) Right Against Exploitation"],
+        answer: "(a) Right to Freedom of Speech and Expression"
+      },
+      {
+        question: "A child is prohibited to work in factories",
+        options: ["(a) Right to Freedom of Speech and Expression", "(b) Right to Freedom of Religion", "(c) Right to Equality", "(d) Right Against Exploitation"],
+        answer: "(d) Right Against Exploitation"
+      },
+      {
+        question: "A person follows their religion without anyone stopping them",
+        options: ["(a) Right to Freedom of Speech and Expression", "(b) Right to Freedom of Religion", "(c) Right to Equality", "(d) Right Against Exploitation"],
+        answer: "(b) Right to Freedom of Religion"
+      }
+    ]
+  },
+  {
+    theme: "Role of Government in Providing Public Facility",
+    questions: [
+      {
+        question: "Which of the following is NOT considered a public facility?",
+        options: ["Water supply", "Electricity", "Private cars", "Public transport"],
+        answer: "Private cars"
+      },
+      {
+        question: "Which article of the Indian Constitution includes the right to water?",
+        options: ["Article 14", "Article 21", "Article 32", "Article 44"],
+        answer: "Article 21"
+      },
+      {
+        question: "What is the primary source of government funding for public facilities?",
+        options: ["Donations", "Loans", "Taxes", "Foreign aid"],
+        answer: "Taxes"
+      }
+    ]
+  },
+  {
+    theme: "Law and Social Justice",
+    questions: [
+      {
+        question: "Why are worker laws necessary?",
+        options: ["To ensure fair wages and safe working conditions", "To allow companies to decide their own worker policies", "To increase competition among workers", "To encourage child worker in industries"],
+        answer: "To ensure fair wages and safe working conditions"
+      },
+      {
+        question: "What was the main cause of the Bhopal Gas Tragedy?",
+        options: ["A natural disaster", "A chemical leak due to poor safety measures", "A workers' protest", "A government shutdown"],
+        answer: "A chemical leak due to poor safety measures"
+      },
+      {
+        question: "Which Fundamental Right is linked to workplace safety and fair wages?",
+        options: ["Right to Freedom", "Right to Equality", "Right to Life (Article 21)", "Right to Education"],
+        answer: "Right to Life (Article 21)"
+      }
+    ]
+  },
+  {
+    theme: "Survey of Local Historical Places",
+    questions: [
+      {
+        question: "'Golden Temple' is located in which city of India?",
+        options: ["Amritsar", "Ujjain", "Varanasi", "Mathura"],
+        answer: "Amritsar"
+      },
+      {
+        question: "The Gwalior fort is located in which Indian state?",
+        options: ["Odisha", "West Bengal", "Madhya Pradesh", "Gujarat"],
+        answer: "Madhya Pradesh"
+      },
+      {
+        question: "Which River is the Kashi Vishwanath Temple located nearby?",
+        options: ["Ganga", "Yamuna", "Sarasvati", "Godavari"],
+        answer: "Ganga"
+      }
+    ]
+  }
+];let allQuestions = [];
+quizData.forEach(topic => {
+  topic.questions.forEach(q => {
+    allQuestions.push({ ...q, theme: topic.theme });
+  });
+});
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+allQuestions = shuffle(allQuestions.map(q => ({ ...q, options: shuffle([...q.options]) })));
+
+let currentIndex = 0;
+let answers = Array(allQuestions.length).fill(null);
+
+const themeTitle = document.getElementById('theme-title');
+const questionText = document.getElementById('question-text');
+const optionsContainer = document.getElementById('options-container');
+const feedbackMessage = document.getElementById('feedback-message');
+const prevButton = document.getElementById('prev-button');
+const nextButton = document.getElementById('next-button');
+const submitButton = document.getElementById('submit-button');
+const resultSection = document.getElementById('result-section');
+const scoreDisplay = document.getElementById('score-display');
+const chartCanvas = document.getElementById('result-chart');
+const incorrectAnswers = document.getElementById('incorrect-answers');
+
+function loadQuestion() {
+  const q = allQuestions[currentIndex];
+  themeTitle.textContent = `Theme: ${q.theme}`;
+  questionText.textContent = `${currentIndex + 1}. ${q.question}`;
+  optionsContainer.innerHTML = '';
+  feedbackMessage.textContent = '';
+
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-button block w-full text-left px-4 py-2 bg-gray-200 rounded hover:bg-gray-300';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      answers[currentIndex] = opt;
+      Array.from(optionsContainer.children).forEach(b => b.disabled = true);
+      if (opt === q.answer) {
+        btn.classList.add('correct');
+        feedbackMessage.textContent = 'Correct!';
+        feedbackMessage.className = 'feedback-message text-green-600';
+      } else {
+        btn.classList.add('incorrect');
+        feedbackMessage.textContent = `Incorrect! Correct: ${q.answer}`;
+        feedbackMessage.className = 'feedback-message text-red-600';
+      }
+    };
+    optionsContainer.appendChild(btn);
+  });
+
+  prevButton.disabled = currentIndex === 0;
+  nextButton.disabled = currentIndex === allQuestions.length - 1;
+}
+
+nextButton.onclick = () => {
+  if (currentIndex < allQuestions.length - 1) {
+    currentIndex++;
+    loadQuestion();
+  }
+};
+
+prevButton.onclick = () => {
+  if (currentIndex > 0) {
+    currentIndex--;
+    loadQuestion();
+  }
+};
+
+submitButton.onclick = () => {
+  let correct = 0, incorrect = 0, unattempted = 0;
+  incorrectAnswers.innerHTML = '<h3 class="font-semibold mb-2">Incorrect Questions:</h3>';
+
+  allQuestions.forEach((q, i) => {
+    const ans = answers[i];
+    if (!ans) unattempted++;
+    else if (ans === q.answer) correct++;
+    else {
+      incorrect++;
+      const div = document.createElement('div');
+      div.innerHTML = `<p class='text-sm'><b>Q${i+1}:</b> ${q.question}<br><span class='text-red-600'>Your Answer:</span> ${ans}<br><span class='text-green-600'>Correct Answer:</span> ${q.answer}</p><hr class='my-2'/>`;
+      incorrectAnswers.appendChild(div);
+    }
+  });
+
+  let total = allQuestions.length;
+  let percent = ((correct / total) * 100).toFixed(2);
+  scoreDisplay.innerHTML = `<b>Score:</b> ${correct}/${total} (<b>${percent}%</b>)`;
+
+  new Chart(chartCanvas, {
+    type: 'pie',
+    data: {
+      labels: ['Correct', 'Incorrect', 'Unattempted'],
+      datasets: [{
+        data: [correct, incorrect, unattempted],
+        backgroundColor: ['#22c55e', '#ef4444', '#facc15']
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  resultSection.classList.remove('hidden');
+  window.scrollTo(0, document.body.scrollHeight);
+};
+
+loadQuestion();
+
+  </script>
+</body>
+</html>
